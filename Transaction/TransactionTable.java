@@ -7,6 +7,15 @@ import java.io.IOException;
 public class TransactionTable {
 	ArrayList<TransactionRow> trTable= new ArrayList<TransactionRow>();
 	
+	TransactionTable() {
+		try {
+			insertInTable();
+		}
+		catch (IOException e) {
+			
+		}
+	}
+	
 	void insertInTable() throws IOException{
 		try(BufferedReader br = new BufferedReader(new FileReader("table.txt"))) {
 		    for(String line; (line = br.readLine()) != null; ) {
