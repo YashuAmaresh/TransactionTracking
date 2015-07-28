@@ -1,57 +1,67 @@
-import java.util.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-
-
-public class TransactionTable {
-	ArrayList<TransactionRow> trTable= new ArrayList<TransactionRow>();
+public class TransactionRow {
 	
-	void insertInTable() throws IOException{
-		try(BufferedReader br = new BufferedReader(new FileReader("table.txt"))) {
-		    for(String line; (line = br.readLine()) != null; ) {
-		    	String columnArray[] = line.split(" ");
-		        TransactionRow row = new TransactionRow();
-		        row.rangeObj.lo = Integer.parseInt(columnArray[0]);
-		        row.rangeObj.hi = Integer.parseInt(columnArray[1]);
-		        row.statusCode = columnArray[2].charAt(0);
-		        row.transferCode = Integer.parseInt(columnArray[3]);
-		    }
-		    
+	Range rangeObj;
+	char statusCode;
+	int transferCode;
+	boolean isDeleted;
+	
+	void mergeRows(TransactionRow otherRow) {
+		Range otherRange = otherRow.rangeObj;
+		
+		Range.Relation rangeType = rangeObj.classify(otherRange);
+		//boolean sameCodes = (this.statusCode == otherRow.statusCode) && (this.transferCode == otherRow.transferCode);
+		if (rangeType == Range.Relation.LESSOVERLAP) {				//&& sameCodes) {
+			this.rangeObj.hi = otherRow.rangeObj.hi;
+			deleteRow(otherRow);
 		}
+ 		
+		else if (rangeType == Range.Relation.MOREOVERLAP) {
+			otherRow.rangeObj.lo = this.rangeObj.lo;
+			deleteRow(this);
+		}		
 	}
 	
-	void insertInOutputTable(TransactionRow tr)
-	{
-		for(int i=0 ;i<trTable.size()-1;i++)
-		{
-			for(int j= i + 1;j > 0 ;j--){
-				checkRelation(trTable.get(i), trTable.get(j), i, j);
-			}
-		}
+	void deleteRow(TransactionRow row) {
+		row.isDeleted = true;
 	}
 	
-	void checkRelation(TransactionRow row1, TransactionRow row2, int i, int j)
-	{
-		if (row1.statusCode == row2.statusCode && row1.transferCode == row2.transferCode) {
-			if (!row1.rangeObj.isDisjoint(row2.rangeObj)) {
-				row1.mergeRows(row2);
-			}
+	TransactionRow splitRow(TransactionRow otherRow) {
+		
+		Range otherRange = otherRow.rangeObj;
+		Range.Relation rangeType = rangeObj.classify(otherRange);
+		TransactionRow tr=new TransactionRow();
+		if(rangeType == Range.Relation.SUBSET) {
+			tr.statusCode=this.statusCode;
+			tr.transferCode=this.transferCode;
+			tr.rangeObj.lo=otherRow.rangeObj.hi+1;
+			tr.rangeObj.hi=this.rangeObj.hi;
+			this.rangeObj.hi=otherRow.rangeObj.lo-1;
 		}
 		
-		if (row1.rangeObj.classify(row2.rangeObj) == Range.Relation.SAME) {
-			row1.statusCode = row2.statusCode;
-			row1.transferCode = row2.transferCode;
+		if(rangeType == Range.Relation.SUPERSET) {
+			tr.statusCode=otherRow.statusCode;
+			tr.transferCode=otherRow.transferCode;
+			tr.rangeObj.lo=this.rangeObj.hi+1;
+			tr.rangeObj.hi=otherRow.rangeObj.hi;
+			otherRow.rangeObj.hi=this.rangeObj.lo-1;
+			swapRowAttributes(this, otherRow);
 		}
 		
-		if (row1.statusCode != row2.statusCode || row1.transferCode != row2.transferCode) {
-			if (!row1.rangeObj.isDisjoint(row2.rangeObj)) {
-				TransactionRow newRow = row1.splitRow(row2);
-				trTable.add(i + 1, row2);
-				trTable.add(i + 2, newRow);				
-			}
-			
-		}
+		return tr;
+	
+	}
+	
+	void swapRowAttributes(TransactionRow row1, TransactionRow row2) {
+		int tempStartVal;
+		int tempEndVal;
+		
+		tempStartVal = row1.rangeObj.hi;
+		row1.rangeObj.hi = row2.rangeObj.hi;
+		row2.rangeObj.hi = tempStartVal;
+		
+		tempEndVal = row1.rangeObj.lo;
+		row1.rangeObj.lo = row2.rangeObj.lo;
+		row2.rangeObj.lo = tempEndVal;
 	}
 	
 }
