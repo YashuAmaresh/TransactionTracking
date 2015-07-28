@@ -30,7 +30,7 @@ public class TransactionTable {
 		}
 	}
 	
-	void insertInOutputTable(TransactionRow tr)
+	void processRows()
 	{
 		for(int i=0 ;i<trTable.size()-1;i++)
 		{
