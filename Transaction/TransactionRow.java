@@ -26,8 +26,30 @@ public class TransactionRow {
 		row.isDeleted = true;
 	}
 	
-	void splitRow(TransactionRow otherRow) {
+	TransactionRow splitRow(TransactionRow otherRow) {
 		
+		Range otherRange = otherRow.rangeObj;
+		Range.Relation rangeType = rangeObj.classify(otherRange);
+		TransactionRow tr=new TransactionRow();
+		if(rangeType == Range.Relation.SUBSET) {
+			tr.statusCode=this.statusCode;
+			tr.transferCode=this.transferCode;
+			tr.rangeObj.lo=otherRow.rangeObj.hi+1;
+			tr.rangeObj.hi=this.rangeObj.hi;
+			this.rangeObj.hi=otherRow.rangeObj.lo-1;
+		}
+		
+		if(rangeType == Range.Relation.SUPERSET) {
+			tr.statusCode=otherRow.statusCode;
+			tr.transferCode=otherRow.transferCode;
+			tr.rangeObj.lo=this.rangeObj.hi+1;
+			tr.rangeObj.hi=otherRow.rangeObj.hi;
+			otherRow.rangeObj.hi=this.rangeObj.lo-1;
+		}
+		
+		return tr;
+	
 	}
+	
 
 }
