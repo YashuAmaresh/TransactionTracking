@@ -21,4 +21,18 @@ public class TransactionTable {
 		}
 	}
 	
+	void insertInOutputTable(TransactionRow tr)
+	{
+		for(int i=0 ;i<transactionTable.size()-1;i++)
+		{
+			for(int j=1;j<transactionTable.size();j++){
+				checkRelation(transactionTable.get(i),transactionTable.get(j),i,j);
+			}
+		}
+	}
+	
+	void checkRelation(TransactionRow row1,TransactionRow row2,)
+	{
+	}
+	
 }
